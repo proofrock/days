@@ -1,4 +1,18 @@
-.PHONY: all build frontend backend clean run dev docker-build docker-run test
+# Copyright 2025
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+.PHONY: all build frontend backend clean run dev docker-build docker-run test update
 
 # Version (can be overridden: make build VERSION=1.0.0)
 VERSION ?= dev
@@ -79,6 +93,16 @@ backend-deps:
 # Install all dependencies
 deps: frontend-deps backend-deps
 
+# Update all dependencies to latest versions
+update:
+	@echo "Updating frontend dependencies..."
+	cd $(FRONTEND_DIR) && npm update
+	@echo "Updating Go dependencies..."
+	go get -u ./...
+	go mod tidy
+	@echo "Dependencies updated successfully!"
+	@echo "Run 'make build' to rebuild with updated dependencies."
+
 # Help
 help:
 	@echo "Available targets:"
@@ -93,5 +117,6 @@ help:
 	@echo "  make docker-run         - Run Docker container"
 	@echo "  make test               - Run tests"
 	@echo "  make deps               - Install all dependencies"
+	@echo "  make update             - Update all dependencies to latest versions"
 	@echo ""
 	@echo "Version can be set with: make build VERSION=1.0.0"

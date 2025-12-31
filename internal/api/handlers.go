@@ -1,3 +1,17 @@
+// Copyright 2025
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package api
 
 import (
@@ -13,8 +27,8 @@ import (
 // RegisterRoutes sets up all API routes
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	// API endpoints
-	mux.HandleFunc("/api/entries/", makeEntryHandler(db))
 	mux.HandleFunc("/api/entries/month/", makeMonthHandler(db))
+	mux.HandleFunc("/api/entries/", makeEntryHandler(db))
 }
 
 // makeEntryHandler creates a handler for individual entry operations
@@ -45,6 +59,7 @@ func makeEntryHandler(db *sql.DB) http.HandlerFunc {
 
 // makeMonthHandler creates a handler for getting entries by month
 // GET /api/entries/month/{year}/{month} - Get all entry dates for a month
+// GET /api/entries/month/{year}/{month}/summary - Get entry summaries with working status
 func makeMonthHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -52,22 +67,36 @@ func makeMonthHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Extract year and month from path
+		// Extract path components
 		path := r.URL.Path[len("/api/entries/month/"):]
 		var year, month int
-		if _, err := fmt.Sscanf(path, "%d/%d", &year, &month); err != nil {
+		var summary string
+
+		// Try to parse with summary suffix
+		n, _ := fmt.Sscanf(path, "%d/%d/%s", &year, &month, &summary)
+		if n < 2 {
 			http.Error(w, "Invalid year/month format", http.StatusBadRequest)
 			return
 		}
 
-		dates, err := models.GetEntriesByMonth(db, year, month)
-		if err != nil {
-			log.Printf("Error getting entries by month: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+		// Check if summary endpoint is requested
+		if summary == "summary" {
+			summaries, err := models.GetEntriesSummaryByMonth(db, year, month)
+			if err != nil {
+				log.Printf("Error getting entries summary by month: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			respondJSON(w, summaries)
+		} else {
+			dates, err := models.GetEntriesByMonth(db, year, month)
+			if err != nil {
+				log.Printf("Error getting entries by month: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			respondJSON(w, dates)
 		}
-
-		respondJSON(w, dates)
 	}
 }
 

@@ -1,3 +1,17 @@
+// Copyright 2025
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package models
 
 import (
@@ -19,6 +33,7 @@ const (
 	FieldPositionName = "POSITION_NAME"
 	FieldRating       = "RATING"
 	FieldGeneral      = "GENERAL"
+	FieldWorking      = "WORKING"
 	FieldMood         = "MOOD"
 	FieldMoodText     = "MOOD_TXT"
 	FieldLunch        = "LUNCH"
@@ -36,6 +51,7 @@ func AllFieldIDs() []string {
 		FieldPositionName,
 		FieldRating,
 		FieldGeneral,
+		FieldWorking,
 		FieldMood,
 		FieldMoodText,
 		FieldLunch,
@@ -87,6 +103,12 @@ func GetEntry(db *sql.DB, date string) (*Entry, error) {
 	}, nil
 }
 
+// EntrySummary represents a minimal entry summary with working status
+type EntrySummary struct {
+	Date    string `json:"date"`
+	Working string `json:"working"`
+}
+
 // GetEntriesByMonth retrieves all entry dates for a given year and month
 func GetEntriesByMonth(db *sql.DB, year, month int) ([]string, error) {
 	// SQLite date format: YYYY-MM-DD
@@ -108,6 +130,34 @@ func GetEntriesByMonth(db *sql.DB, year, month int) ([]string, error) {
 	}
 
 	return dates, nil
+}
+
+// GetEntriesSummaryByMonth retrieves entry summaries with working status for a given year and month
+func GetEntriesSummaryByMonth(db *sql.DB, year, month int) ([]EntrySummary, error) {
+	pattern := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).Format("2006-01")
+
+	rows, err := db.Query(`
+		SELECT e.date, COALESCE(d.value, '') as working
+		FROM entries e
+		LEFT JOIN details d ON e.date = d.date AND d.field_id = ?
+		WHERE e.date LIKE ?
+		ORDER BY e.date
+	`, FieldWorking, pattern+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var summaries []EntrySummary
+	for rows.Next() {
+		var summary EntrySummary
+		if err := rows.Scan(&summary.Date, &summary.Working); err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, summary)
+	}
+
+	return summaries, nil
 }
 
 // SaveEntry creates or updates an entry

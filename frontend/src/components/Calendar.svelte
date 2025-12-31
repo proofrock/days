@@ -1,6 +1,22 @@
+<!--
+Copyright 2025
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getEntriesByMonth } from '../api';
+  import { getEntriesSummaryByMonth } from '../api';
 
   // Props
   interface Props {
@@ -14,7 +30,7 @@
   // State
   let currentYear = $state(new Date().getFullYear());
   let currentMonth = $state(new Date().getMonth() + 1); // 1-12
-  let entryDates = $state<Set<string>>(new Set());
+  let entryData = $state<Map<string, string>>(new Map()); // date -> working status
 
   // Computed values
   let monthName = $derived(new Date(currentYear, currentMonth - 1).toLocaleString('default', { month: 'long' }));
@@ -35,11 +51,11 @@
     // Convert to Monday-based week (0 = Monday, 6 = Sunday)
     const mondayBasedStart = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
 
-    const days: Array<{ day: number; date: string; isToday: boolean; hasEntry: boolean }> = [];
+    const days: Array<{ day: number; date: string; isToday: boolean; hasEntry: boolean; working: string }> = [];
 
     // Add padding for days before month starts
     for (let i = 0; i < mondayBasedStart; i++) {
-      days.push({ day: 0, date: '', isToday: false, hasEntry: false });
+      days.push({ day: 0, date: '', isToday: false, hasEntry: false, working: '' });
     }
 
     // Add days of the month
@@ -49,8 +65,9 @@
       const isToday = year === today.getFullYear()
         && month === today.getMonth() + 1
         && day === today.getDate();
-      const hasEntry = entryDates.has(date);
-      days.push({ day, date, isToday, hasEntry });
+      const working = entryData.get(date) || '';
+      const hasEntry = entryData.has(date);
+      days.push({ day, date, isToday, hasEntry, working });
     }
 
     return days;
@@ -59,8 +76,8 @@
   // Load entries for current month
   async function loadEntries() {
     try {
-      const dates = await getEntriesByMonth(currentYear, currentMonth);
-      entryDates = new Set(dates);
+      const summaries = await getEntriesSummaryByMonth(currentYear, currentMonth);
+      entryData = new Map(summaries.map(s => [s.date, s.working]));
     } catch (error) {
       console.error('Failed to load entries:', error);
     }
@@ -130,7 +147,7 @@
     {/each}
 
     <!-- Days -->
-    {#each days as { day, date, isToday, hasEntry }}
+    {#each days as { day, date, isToday, hasEntry, working }}
       {#if day === 0}
         <div class="calendar-day empty"></div>
       {:else}
@@ -138,6 +155,9 @@
           class="calendar-day"
           class:today={isToday}
           class:has-entry={hasEntry}
+          class:worked={working === 'yes'}
+          class:worked-partial={working === 'partial'}
+          class:not-worked={working === 'no'}
           class:selected={date === selectedDate}
           onclick={() => selectDay(date)}
         >
@@ -197,6 +217,21 @@
 
   .calendar-day.has-entry {
     background-color: #9fd3e5;
+  }
+
+  .calendar-day.worked {
+    background-color: #d1e7dd;
+    border-color: #198754;
+  }
+
+  .calendar-day.worked-partial {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+  }
+
+  .calendar-day.not-worked {
+    background-color: #f8d7da;
+    border-color: #dc3545;
   }
 
   .calendar-day.selected {

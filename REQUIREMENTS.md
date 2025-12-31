@@ -20,8 +20,10 @@ The main entity is an **entry**, which is a journal "day" record. Each entry, ha
 
 - "POSITION_LON": longitude, where was I
 - "POSITION_LAT": latitude, where was I
+- "POSITION_NAME": text, location name resolved from coordinates
 - "RATING": 1 to 10, a rating of the day
 - "GENERAL": text, a general overview of the day
+- "WORKING": state, whether I worked ("yes", "partial", "no", or empty)
 - "MOOD": 1 to 10, a rating of my mood
 - "MOOD_TXT": one-liner text, a short description of the rating above
 - "LUNCH": text, what I ate for lunch
@@ -70,10 +72,13 @@ When pressing `View` or `Edit`, the same details form must be shown. The only di
 
 This details form will be a form with the entry details, as described above in the General section, in that order. Some notes:
 
-- `text` indicates a text area, `one-liner text` a text field, `1 to 10` a stars control to click
+- `text` indicates a text area, `one-liner text` a text field, `1 to 10` a stars control to click, `state` a button group with options
 - For the ratings (RATING, MOOD, SLEEP) the votes are 1-10, so 0 stars indicates "no rating". If "no rating" is given, the corresponding _TXT field (where present) should not be active. Also, the number of selected stars should be indicated beside the control, 'N.a.' if 0.
 - Longitude and latitude must be implemented with a button "Current position" that hooks to the location system of the phone
+- A button "Get location name" should reverse-geocode the coordinates to a location name using OpenStreetMap Nominatim API (no API key required)
 - When a position (long/lat) is present, a link to Google Maps (external) should be given.
+- WORKING field should be a button group with three options: "Worked" (green), "Partial" (yellow), "Not worked" (red). Only one can be selected at a time, or none.
+- Calendar days should have different background colors based on WORKING status: green for worked, yellow for partial, red for not worked, blue for entries without working status.
 - If a text area/field is left blank, or no rating, or no position, the corresponding detail should be NULL but the detail line must be present
 
 2 buttons should be at the top of the form, centered:

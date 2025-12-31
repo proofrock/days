@@ -1,3 +1,19 @@
+<!--
+Copyright 2025
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Entry, ViewMode } from '../types';
@@ -25,6 +41,7 @@
   let positionName = $state('');
   let rating = $state(0);
   let general = $state('');
+  let working = $state(''); // '', 'yes', 'partial', 'no'
   let mood = $state(0);
   let moodTxt = $state('');
   let lunch = $state('');
@@ -54,6 +71,7 @@
         positionName = data.fields[FIELD_IDS.POSITION_NAME] || '';
         rating = parseInt(data.fields[FIELD_IDS.RATING] || '0');
         general = data.fields[FIELD_IDS.GENERAL] || '';
+        working = data.fields[FIELD_IDS.WORKING] || '';
         mood = parseInt(data.fields[FIELD_IDS.MOOD] || '0');
         moodTxt = data.fields[FIELD_IDS.MOOD_TXT] || '';
         lunch = data.fields[FIELD_IDS.LUNCH] || '';
@@ -143,6 +161,7 @@
         [FIELD_IDS.POSITION_NAME]: positionName,
         [FIELD_IDS.RATING]: rating.toString(),
         [FIELD_IDS.GENERAL]: general,
+        [FIELD_IDS.WORKING]: working,
         [FIELD_IDS.MOOD]: mood.toString(),
         [FIELD_IDS.MOOD_TXT]: moodTxt,
         [FIELD_IDS.LUNCH]: lunch,
@@ -223,21 +242,19 @@
                   disabled={isViewMode}
                 />
               </div>
-              <div class="col-md-2">
-                {#if !isViewMode}
+              {#if !isViewMode}
+                <div class="col-md-1">
                   <button type="button" class="btn btn-outline-primary w-100" onclick={getCurrentPosition} title="Get current position">
                     📍
                   </button>
-                {/if}
-              </div>
+                </div>
+                <div class="col-md-1">
+                  <button type="button" class="btn btn-outline-secondary w-100" onclick={reverseGeocode} title="Get location name" disabled={!hasPosition}>
+                    🏷️
+                  </button>
+                </div>
+              {/if}
             </div>
-            {#if hasPosition && !isViewMode}
-              <div class="mb-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick={reverseGeocode}>
-                  Get location name
-                </button>
-              </div>
-            {/if}
             {#if hasPosition}
               <div class="mt-2">
                 {#if positionName}
@@ -268,6 +285,43 @@
               bind:value={general}
               disabled={isViewMode}
             ></textarea>
+          </div>
+
+          <!-- Working -->
+          <div class="mb-3">
+            <div class="fw-bold mb-2">Working</div>
+            <div class="btn-group" role="group">
+              <button
+                type="button"
+                class="btn"
+                class:btn-success={working === 'yes'}
+                class:btn-outline-secondary={working !== 'yes'}
+                onclick={() => working = working === 'yes' ? '' : 'yes'}
+                disabled={isViewMode}
+              >
+                Worked
+              </button>
+              <button
+                type="button"
+                class="btn"
+                class:btn-warning={working === 'partial'}
+                class:btn-outline-secondary={working !== 'partial'}
+                onclick={() => working = working === 'partial' ? '' : 'partial'}
+                disabled={isViewMode}
+              >
+                Partial
+              </button>
+              <button
+                type="button"
+                class="btn"
+                class:btn-danger={working === 'no'}
+                class:btn-outline-secondary={working !== 'no'}
+                onclick={() => working = working === 'no' ? '' : 'no'}
+                disabled={isViewMode}
+              >
+                Not worked
+              </button>
+            </div>
           </div>
 
           <!-- Mood -->
