@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+bin/
+dist/
+frontend/node_modules/
+
+# Data
+data/
+*.db
+
+# Documentation
+README.md
+REQUIREMENTS.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

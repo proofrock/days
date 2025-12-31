@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  days:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-1.0.0}
+    container_name: days-journal
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/journal.db
+      - PORT=8080
+    restart: unless-stopped

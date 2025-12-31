@@ -1,0 +1,32 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Data
+data/
+*.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Build outputs
+bin/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
